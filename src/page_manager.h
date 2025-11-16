@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "chunk.h"
+#include "page.h"
 
 #include "core/orthographic_camera.h"
 
@@ -11,12 +11,12 @@
 
 #include <glm/vec2.hpp>
 
-class ChunkManager {
+class PageManager {
 public:
-    float chunk_size_ {0};
+    float page_size_ {0};
     int curr_lod {0};
     int prev_lod {0};
-    bool show_wireframes {true};
+    bool show_wireframes {false};
 
     struct Dimensions {
         unsigned int width {0};
@@ -31,20 +31,20 @@ public:
     struct Parameters {
         Dimensions image_dims;
         Dimensions window_dims;
-        float chunk_size;
+        float page_size;
         int lods;
     };
 
-    explicit ChunkManager(const Parameters& params);
+    explicit PageManager(const Parameters& params);
 
     auto Debug() -> void;
 
     auto Update(const OrthographicCamera& camera) -> void;
 
-    auto GetVisibleChunks() -> std::vector<Chunk*>;
+    auto GetVisiblePages() -> std::vector<Page*>;
 
 private:
-    std::vector<std::vector<Chunk>> chunks_;
+    std::vector<std::vector<Page>> pages_;
 
     Bounds visible_bounds_ {};
     Dimensions image_dims_ {};
@@ -53,11 +53,11 @@ private:
     int lods_ {0};
     int max_lod_ {0};
 
-    auto GenerateChunks() -> void;
+    auto GeneratePages() -> void;
 
     auto ComputeLod(const OrthographicCamera& camera) const -> int;
 
-    auto IsChunkVisible(const Chunk& chunk) const -> bool;
+    auto IsPageVisible(const Page& page) const -> bool;
 
     auto ComputeVisibleBounds(const OrthographicCamera& camera) const -> Bounds;
 };

@@ -15,8 +15,7 @@
 #include "shaders/headers/line_vert.h"
 #include "shaders/headers/line_frag.h"
 
-#include "chunk.h"
-#include "chunk_manager.h"
+#include "page_manager.h"
 
 #include <imgui.h>
 
@@ -33,10 +32,10 @@ auto main() -> int {
     constexpr auto camera_height = camera_width / aspect;
     constexpr auto lods = 4;
 
-    auto chunk_manager = ChunkManager {{
+    auto page_manager = PageManager {{
         .image_dims = {8192, 8192},
         .window_dims = {win_width, win_height},
-        .chunk_size = 1024.0f,
+        .page_size = 1024.0f,
         .lods = lods
     }};
 
@@ -65,8 +64,8 @@ auto main() -> int {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         controls.Update();
-        chunk_manager.Update(camera);
-        chunk_manager.Debug();
+        page_manager.Update(camera);
+        page_manager.Debug();
 
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         glDisable(GL_BLEND);
@@ -74,29 +73,27 @@ auto main() -> int {
         shader_tile.Use();
         shader_tile.SetUniform("u_Projection", camera.Projection());
 
-        auto chunks = chunk_manager.GetVisibleChunks();
-        for (auto& chunk : chunks) {
-            if (chunk->State() != ChunkState::Loaded) {
-                continue;
-            }
-            chunk->Texture().Bind();
-            shader_tile.SetUniform("u_ModelView", camera.View() * chunk->ModelMatrix());
+        auto pages = page_manager.GetVisiblePages();
+        for (auto& page : pages) {
+            if (page->State() != PageState::Loaded) continue;
+            page->Texture().Bind();
+            shader_tile.SetUniform("u_ModelView", camera.View() * page->ModelMatrix());
             geometry.Draw(shader_tile);
         }
 
-        if (chunk_manager.show_wireframes) {
+        if (page_manager.show_wireframes) {
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
             glEnable(GL_BLEND);
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
             shader_line.Use();
             shader_line.SetUniform("u_Projection", camera.Projection());
 
-            for (const auto& chunk : chunks) {
-                if (chunk->Lod() != chunk_manager.curr_lod ||
-                    chunk->State() != ChunkState::Loaded) {
+            for (const auto& page : pages) {
+                if (page->Lod() != page_manager.curr_lod ||
+                    page->State() != PageState::Loaded) {
                     continue;
                 }
-                shader_line.SetUniform("u_ModelView", camera.View() * chunk->ModelMatrix());
+                shader_line.SetUniform("u_ModelView", camera.View() * page->ModelMatrix());
                 geometry.Draw(shader_line);
             }
         }

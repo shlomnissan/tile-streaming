@@ -14,14 +14,14 @@
 
 namespace fs = std::filesystem;
 
-enum class ChunkState {
+enum class PageState {
     Unloaded,
     Loading,
     Loaded,
     Error
 };
 
-class Chunk {
+class Page {
 public:
     struct Params {
         glm::ivec2 grid_index;
@@ -33,9 +33,9 @@ public:
 
     bool visible {false};
 
-    Chunk(const Params& params, const fs::path& path);
+    Page(const Params& params, const fs::path& path);
 
-    [[nodiscard]] auto State() const -> ChunkState {
+    [[nodiscard]] auto State() const -> PageState {
         return state_;
     }
 
@@ -64,7 +64,7 @@ private:
 
     fs::path source_;
 
-    ChunkState state_ {ChunkState::Unloaded};
+    PageState state_ {PageState::Unloaded};
 
     std::shared_ptr<ImageLoader> image_loader_ {nullptr};
 

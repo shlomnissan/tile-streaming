@@ -56,10 +56,10 @@ add_executable(tiling
     ${LIBS_SOURCES}
     ${CORE_SOURCES}
     ${EXTERNAL_SOURCES}
-    src/chunk.cpp
-    src/chunk.h
-    src/chunk_manager.cpp
-    src/chunk_manager.h
+    src/page.cpp
+    src/page.h
+    src/page_manager.cpp
+    src/page_manager.h
     src/main.cpp
 )
 
