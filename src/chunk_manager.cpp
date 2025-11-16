@@ -8,6 +8,7 @@
 #include <imgui.h>
 
 ChunkManager::ChunkManager(const Parameters& params) :
+    chunk_size_(params.chunk_size),
     image_dims_(params.image_dims),
     window_dims_(params.window_dims),
     lods_(params.lods),
@@ -26,8 +27,7 @@ auto ChunkManager::ComputeLod(const OrthographicCamera& camera) const -> int {
 }
 
 auto ChunkManager::Update(const OrthographicCamera& camera) -> void {
-    auto this_lod = ComputeLod(camera);
-    if (this_lod != curr_lod) {
+    if (auto this_lod = ComputeLod(camera); this_lod != curr_lod) {
         prev_lod = curr_lod;
         curr_lod = this_lod;
     }
@@ -49,18 +49,18 @@ auto ChunkManager::GenerateChunks() -> void {
         const auto lod_width = static_cast<float>(image_dims_.width) / (1 << i);
         const auto lod_height = static_cast<float>(image_dims_.height) / (1 << i);
         const auto scale = static_cast<float>(pow(2, i));
-        const auto grid_x = static_cast<int>(lod_width / kChunkSize);
-        const auto grid_y = static_cast<int>(lod_height / kChunkSize);
+        const auto grid_x = static_cast<int>(lod_width / chunk_size_);
+        const auto grid_y = static_cast<int>(lod_height / chunk_size_);
         const auto n_chunks = grid_x * grid_y;
 
         for (auto j = 1; j <= n_chunks; ++j) {
             auto x = (j - 1) % grid_x;
             auto y = (j - 1) / grid_y;
-            auto path = std::format("assets/lod_{}/spiralcrop{}_{:02}.jpg", i, i, j);
+            auto path = std::format("assets/tiles/{}_{}_{}.png", i, x, y);
             chunks_[i].emplace_back(Chunk::Params {
                 .grid_index = {x, y},
-                .position = {x * kChunkSize * scale, y * kChunkSize * scale},
-                .size = {kChunkSize * scale, kChunkSize * scale},
+                .position = {x * chunk_size_ * scale, y * chunk_size_ * scale},
+                .size = {chunk_size_ * scale, chunk_size_ * scale},
                 .scale = scale,
                 .lod = i
             }, path);
@@ -84,7 +84,6 @@ auto ChunkManager::GetVisibleChunks() -> std::vector<Chunk*> {
 
     if (curr_lod == max_lod_) return visible_chunks;
 
-    // collect all visible chunks from the current LOD
     bool all_loaded = true;
     for (auto& chunk : chunks_[curr_lod]) {
         if (chunk.visible) {
@@ -95,7 +94,6 @@ auto ChunkManager::GetVisibleChunks() -> std::vector<Chunk*> {
         }
     }
 
-    // if not all chunks are loaded, add the previous LOD
     if (!all_loaded && curr_lod != max_lod_) {
         for (auto& chunk : chunks_[prev_lod]) {
             if (chunk.visible && chunk.State() == ChunkState::Loaded) {
@@ -148,14 +146,5 @@ auto ChunkManager::Debug() -> void {
     ImGui::Text("Current LOD: %d", curr_lod);
     ImGui::Separator();
     ImGui::Checkbox("Show Wireframes", &show_wireframes);
-    ImGui::Separator();
-    ImGui::Text(" V  L  ");
-    for (auto lod = max_lod_; lod >= 0; --lod) {
-        for (auto i = 0; i < chunks_[lod].size(); ++i) {
-            const auto visible = chunks_[lod][i].visible ? "X" : " ";
-            const auto loaded = chunks_[lod][i].State() == ChunkState::Loaded ? "X" : " ";
-            ImGui::Text("[%s][%s] LOD_%d_CHUNK_%d", visible, loaded, lod, i);
-        }
-    }
     ImGui::End();
 }

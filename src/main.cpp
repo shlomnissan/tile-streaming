@@ -29,22 +29,23 @@ auto main() -> int {
     constexpr auto win_width = 1024;
     constexpr auto win_height = 1024;
     constexpr auto aspect = static_cast<float>(win_width) / win_height;
-    constexpr auto camera_width = 2048.0f; // 2048 x 2048 virtual units
+    constexpr auto camera_width = 8192.0f;
     constexpr auto camera_height = camera_width / aspect;
-    constexpr auto lods = 3;
+    constexpr auto lods = 4;
 
     auto chunk_manager = ChunkManager {{
-        .image_dims = {2048, 2048},
+        .image_dims = {8192, 8192},
         .window_dims = {win_width, win_height},
+        .chunk_size = 1024.0f,
         .lods = lods
     }};
 
-    auto window = Window {win_width, win_height, "Tiling"};
+    auto window = Window {win_width, win_height, "Chunk Streaming"};
     auto camera = OrthographicCamera {0.0f, camera_width, camera_height, 0.0f, -1.0f, 1.0f};
     auto controls = ZoomPanCamera {&camera};
     auto geometry = PlaneGeometry {{
-        .width = 512.0f,
-        .height = 512.0f,
+        .width = 1024.0f,
+        .height = 1024.0f,
         .width_segments = 1,
         .height_segments = 1
     }};
@@ -73,8 +74,6 @@ auto main() -> int {
         shader_tile.Use();
         shader_tile.SetUniform("u_Projection", camera.Projection());
 
-        // render textured tiles
-
         auto chunks = chunk_manager.GetVisibleChunks();
         for (auto& chunk : chunks) {
             if (chunk->State() != ChunkState::Loaded) {
@@ -84,8 +83,6 @@ auto main() -> int {
             shader_tile.SetUniform("u_ModelView", camera.View() * chunk->ModelMatrix());
             geometry.Draw(shader_tile);
         }
-
-        // render wireframes
 
         if (chunk_manager.show_wireframes) {
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);

@@ -13,8 +13,7 @@
 
 class ChunkManager {
 public:
-    constexpr static auto kChunkSize = 512.0f;
-
+    float chunk_size_ {0};
     int curr_lod {0};
     int prev_lod {0};
     bool show_wireframes {true};
@@ -32,7 +31,8 @@ public:
     struct Parameters {
         Dimensions image_dims;
         Dimensions window_dims;
-        int lods {0};
+        float chunk_size;
+        int lods;
     };
 
     explicit ChunkManager(const Parameters& params);
