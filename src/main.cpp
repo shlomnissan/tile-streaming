@@ -4,45 +4,47 @@
 #include <print>
 #include <vector>
 
+#include <imgui.h>
+
 #include "core/orthographic_camera.h"
 #include "core/shaders.h"
 #include "core/window.h"
 #include "geometries/plane_geometry.h"
 #include "resources/zoom_pan_camera.h"
 
+#include "page_manager.h"
+#include "types.h"
+
 #include "shaders/headers/scene_frag.h"
 #include "shaders/headers/scene_vert.h"
 #include "shaders/headers/line_vert.h"
 #include "shaders/headers/line_frag.h"
 
-#include "page_manager.h"
-
-#include <imgui.h>
-
-struct Bounds {
-    glm::vec2 min {0.0f};
-    glm::vec2 max {0.0f};
-};
-
 auto main() -> int {
-    constexpr auto win_width = 1024;
-    constexpr auto win_height = 1024;
-    constexpr auto aspect = static_cast<float>(win_width) / win_height;
-    constexpr auto camera_width = 8192.0f;
-    constexpr auto camera_height = camera_width / aspect;
-    constexpr auto lods = 4;
+    const auto window_dims = Dimensions {1024.0f, 1024.0f};
+    const auto image_dims = Dimensions {8192.0f, 8192.0f};
+    const auto page_size = 1024.0f;
+    const auto lods = 4;
 
-    auto page_manager = PageManager {{
-        .image_dims = {8192, 8192},
-        .window_dims = {win_width, win_height},
-        .page_size = 1024.0f,
-        .lods = lods
-    }};
+    auto page_manager = PageManager {
+        window_dims,
+        image_dims,
+        page_size,
+        lods
+    };
 
-    auto window = Window {win_width, win_height, "Virtual Textures"};
+    auto window = Window {
+        static_cast<int>(window_dims.width),
+        static_cast<int>(window_dims.height),
+        "Tile Streaming"
+    };
+
+    const auto camera_width = 8192.0f;
+    const auto camera_height = camera_width / window_dims.AspectRatio();
     auto camera = OrthographicCamera {0.0f, camera_width, camera_height, 0.0f, -1.0f, 1.0f};
     auto controls = ZoomPanCamera {&camera};
-    auto geometry = PlaneGeometry {{
+
+    const auto geometry = PlaneGeometry {{
         .width = 1024.0f,
         .height = 1024.0f,
         .width_segments = 1,
@@ -63,40 +65,7 @@ auto main() -> int {
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        controls.Update();
-        page_manager.Update(camera);
-        page_manager.Debug();
-
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-        glDisable(GL_BLEND);
-
-        shader_tile.Use();
-        shader_tile.SetUniform("u_Projection", camera.Projection());
-
-        auto pages = page_manager.GetVisiblePages();
-        for (auto& page : pages) {
-            if (page->State() != PageState::Loaded) continue;
-            page->Texture().Bind();
-            shader_tile.SetUniform("u_ModelView", camera.View() * page->ModelMatrix());
-            geometry.Draw(shader_tile);
-        }
-
-        if (page_manager.show_wireframes) {
-            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-            glEnable(GL_BLEND);
-            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-            shader_line.Use();
-            shader_line.SetUniform("u_Projection", camera.Projection());
-
-            for (const auto& page : pages) {
-                if (page->Lod() != page_manager.curr_lod ||
-                    page->State() != PageState::Loaded) {
-                    continue;
-                }
-                shader_line.SetUniform("u_ModelView", camera.View() * page->ModelMatrix());
-                geometry.Draw(shader_line);
-            }
-        }
+        // TODO: implement
     });
 
     return 0;

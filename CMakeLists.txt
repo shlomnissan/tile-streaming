@@ -3,7 +3,7 @@
 
 cmake_minimum_required(VERSION 3.22.1)
 
-project(virtual-textures)
+project(tile-streaming)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -56,11 +56,12 @@ add_executable(tiling
     ${LIBS_SOURCES}
     ${CORE_SOURCES}
     ${EXTERNAL_SOURCES}
+    src/main.cpp
     src/page.cpp
     src/page.h
     src/page_manager.cpp
     src/page_manager.h
-    src/main.cpp
+    src/types.h
 )
 
 target_include_directories(tiling PRIVATE

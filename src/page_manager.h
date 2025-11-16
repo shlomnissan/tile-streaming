@@ -3,55 +3,43 @@
 
 #pragma once
 
-#include "page.h"
-
-#include "core/orthographic_camera.h"
-
 #include <vector>
 
 #include <glm/vec2.hpp>
 
+#include "core/orthographic_camera.h"
+#include "page.h"
+#include "types.h"
+
 class PageManager {
 public:
-    float page_size_ {0};
-    int curr_lod {0};
-    int prev_lod {0};
-    bool show_wireframes {false};
-
-    struct Dimensions {
-        unsigned int width {0};
-        unsigned int height {0};
-    };
-
-    struct Bounds {
-        glm::vec2 min {0.0f};
-        glm::vec2 max {0.0f};
-    };
-
-    struct Parameters {
-        Dimensions image_dims;
-        Dimensions window_dims;
-        float page_size;
-        int lods;
-    };
-
-    explicit PageManager(const Parameters& params);
-
-    auto Debug() -> void;
+    PageManager(
+        const Dimensions& image_dims,
+        const Dimensions& window_dims,
+        const float page_size,
+        const int lods
+    );
 
     auto Update(const OrthographicCamera& camera) -> void;
 
     auto GetVisiblePages() -> std::vector<Page*>;
 
+    auto Debug() -> void;
+
 private:
     std::vector<std::vector<Page>> pages_;
 
-    Bounds visible_bounds_ {};
-    Dimensions image_dims_ {};
-    Dimensions window_dims_ {};
+    Dimensions image_dims_;
+    Dimensions window_dims_;
+    Box2 visible_bounds_;
 
-    int lods_ {0};
-    int max_lod_ {0};
+    float page_size_ {0};
+
+    unsigned max_lods_ {0};
+    unsigned curr_lod_ {0};
+    unsigned prev_lod_ {0};
+
+    bool show_wireframes_ {false};
 
     auto GeneratePages() -> void;
 
@@ -59,5 +47,5 @@ private:
 
     auto IsPageVisible(const Page& page) const -> bool;
 
-    auto ComputeVisibleBounds(const OrthographicCamera& camera) const -> Bounds;
+    auto ComputeVisibleBounds(const OrthographicCamera& camera) const -> Box2;
 };

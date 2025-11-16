@@ -4,69 +4,36 @@
 #pragma once
 
 #include <memory>
-#include <filesystem>
 
 #include <glm/vec2.hpp>
 #include <glm/mat4x4.hpp>
 
 #include "core/texture2d.h"
 #include "loaders/image_loader.h"
+#include "types.h"
 
-namespace fs = std::filesystem;
+struct Page {
+    glm::ivec2 index;
+    glm::vec2 position;
+    glm::vec2 size;
 
-enum class PageState {
-    Unloaded,
-    Loading,
-    Loaded,
-    Error
-};
+    float scale;
 
-class Page {
-public:
-    struct Params {
-        glm::ivec2 grid_index;
-        glm::vec2 position {0.0f, 0.0f};
-        glm::vec2 size;
-        float scale {1.0f};
-        unsigned lod;
-    };
+    unsigned lod;
 
     bool visible {false};
 
-    Page(const Params& params, const fs::path& path);
+    PageState state {PageState::Unloaded};
 
-    [[nodiscard]] auto State() const -> PageState {
-        return state_;
-    }
+    Texture2D texture;
 
-    [[nodiscard]] auto Position() const {
-        return params_.position;
-    }
+    Page(
+        const glm::ivec2 index,
+        const glm::vec2 position,
+        const glm::vec2 size,
+        const float scale,
+        const unsigned lod
+    ): index(index), position(position), size(size), scale(scale), lod(lod) {}
 
-    [[nodiscard]] auto Size() const {
-        return params_.size;
-    }
-
-    [[nodiscard]] auto Lod() const {
-        return params_.lod;
-    }
-
-    [[nodiscard]] auto Texture() -> Texture2D& {
-        return texture_;
-    }
-
-    [[nodiscard]] auto ModelMatrix() const -> glm::mat4;
-
-    auto Load() -> void;
-
-private:
-    Params params_;
-
-    fs::path source_;
-
-    PageState state_ {PageState::Unloaded};
-
-    std::shared_ptr<ImageLoader> image_loader_ {nullptr};
-
-    Texture2D texture_ {};
+    [[nodiscard]] auto Transform() const -> glm::mat4;
 };
