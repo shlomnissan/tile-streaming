@@ -35,7 +35,7 @@ private:
 
     float page_size_ {0};
 
-    unsigned max_lods_ {0};
+    unsigned max_lod_ {0};
     unsigned curr_lod_ {0};
     unsigned prev_lod_ {0};
 

@@ -27,8 +27,8 @@ auto main() -> int {
     const auto lods = 4;
 
     auto page_manager = PageManager {
-        window_dims,
         image_dims,
+        window_dims,
         page_size,
         lods
     };
@@ -39,7 +39,12 @@ auto main() -> int {
         "Tile Streaming"
     };
 
-    const auto camera_width = 8192.0f;
+    // Match the camera's world-space width to the full image width so that
+    // one world unit corresponds to one texel at LOD 0. This keeps zoom and
+    // LOD calculations intuitive: at zoom = 1 the entire image fits exactly
+    // in view, and world-units-per-pixel directly reflects texel density.
+    const auto camera_width = image_dims.width;
+
     const auto camera_height = camera_width / window_dims.AspectRatio();
     auto camera = OrthographicCamera {0.0f, camera_width, camera_height, 0.0f, -1.0f, 1.0f};
     auto controls = ZoomPanCamera {&camera};
@@ -65,7 +70,8 @@ auto main() -> int {
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // TODO: implement
+        controls.Update();
+        page_manager.Update(camera);
     });
 
     return 0;

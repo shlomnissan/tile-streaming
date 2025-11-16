@@ -11,13 +11,14 @@ PageManager::PageManager(
 ) : image_dims_(image_dims),
     window_dims_(window_dims),
     page_size_(page_size),
-    max_lods_(lods - 1)
+    max_lod_(lods - 1)
 {
     pages_.resize(lods);
     GeneratePages();
 }
 
-auto PageManager::Update(const OrthographicCamera&) -> void {
+auto PageManager::Update(const OrthographicCamera& camera) -> void {
+    auto lod = ComputeLod(camera);
     return;
 }
 
@@ -32,7 +33,7 @@ auto Debug() -> void {
 }
 
 auto PageManager::GeneratePages() -> void {
-    for (auto i = 0u; i <= max_lods_; ++i) {
+    for (auto i = 0u; i <= max_lod_; ++i) {
         auto lod_width = image_dims_.width / static_cast<float>(1 << i);
         auto lod_height = image_dims_.height / static_cast<float>(1 << i);
         auto scale = static_cast<float>(pow(2, i));
@@ -45,7 +46,6 @@ auto PageManager::GeneratePages() -> void {
             auto y = (j - 1) / grid_y;
             auto pos_x = static_cast<float>(x) * page_size_;
             auto pos_y = static_cast<float>(y) * page_size_;
-
             pages_[i].emplace_back(Page {
                 {x, y}, // grid index
                 {pos_x, pos_y}, // position,
@@ -57,8 +57,12 @@ auto PageManager::GeneratePages() -> void {
     }
 }
 
-auto PageManager::ComputeLod(const OrthographicCamera&) const -> int {
-    return 0;
+auto PageManager::ComputeLod(const OrthographicCamera& camera) const -> int {
+    auto scale_x = glm::length(glm::vec3{camera.transform[0]});
+    auto virtual_width = camera.Width() / scale_x;
+    auto world_units_per_pixel = virtual_width / window_dims_.width;
+    auto lod = std::log2(world_units_per_pixel);
+    return std::clamp(static_cast<int>(lod), 0, static_cast<int>(max_lod_));
 }
 
 auto PageManager::IsPageVisible(const Page&) const -> bool {
