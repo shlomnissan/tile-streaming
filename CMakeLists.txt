@@ -1,5 +1,5 @@
-# Copyright 2024 Betamark Pty Ltd. All rights reserved.
-# Author: Shlomi Nissan (shlomi@betamark.com)
+# Copyright © 2025 - Present, Shlomi Nissan.
+# All rights reserved.
 
 cmake_minimum_required(VERSION 3.22.1)
 
@@ -38,8 +38,6 @@ set(CORE_SOURCES
     src/core/timer.h
     src/core/window.cpp
     src/core/window.h
-    src/geometries/box_geometry.cpp
-    src/geometries/box_geometry.h
     src/geometries/plane_geometry.cpp
     src/geometries/plane_geometry.h
     src/loaders/image_loader.cpp

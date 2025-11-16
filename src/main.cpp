@@ -1,4 +1,4 @@
-// Copyright © 2024 - Present, Shlomi Nissan.
+// Copyright © 2025 - Present, Shlomi Nissan.
 // All rights reserved.
 
 #include <print>
@@ -40,7 +40,7 @@ auto main() -> int {
         .lods = lods
     }};
 
-    auto window = Window {win_width, win_height, "Chunk Streaming"};
+    auto window = Window {win_width, win_height, "Virtual Textures"};
     auto camera = OrthographicCamera {0.0f, camera_width, camera_height, 0.0f, -1.0f, 1.0f};
     auto controls = ZoomPanCamera {&camera};
     auto geometry = PlaneGeometry {{

@@ -1,4 +1,4 @@
-// Copyright © 2024 - Present, Shlomi Nissan.
+// Copyright © 2025 - Present, Shlomi Nissan.
 // All rights reserved.
 
 #include "orthographic_camera.h"
