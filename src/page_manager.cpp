@@ -3,6 +3,8 @@
 
 #include "page_manager.h"
 
+#include <imgui.h>
+
 PageManager::PageManager(
     const Dimensions& image_dims,
     const Dimensions& window_dims,
@@ -18,18 +20,31 @@ PageManager::PageManager(
 }
 
 auto PageManager::Update(const OrthographicCamera& camera) -> void {
-    auto lod = ComputeLod(camera);
-    return;
+    if (auto lod = ComputeLod(camera); first_frame_ || lod != curr_lod_) {
+        prev_lod_ = first_frame_ ? lod : curr_lod_;
+        curr_lod_ = lod;
+        if (first_frame_) first_frame_ = false;
+    }
 }
 
-auto PageManager::GetVisiblePages() -> std::vector<Page*> {
+auto PageManager::GetVisiblePages() const -> std::vector<Page*> {
     std::vector<Page*> visible_pages;
 
     return visible_pages;
 }
 
-auto Debug() -> void {
-    return;
+auto PageManager::Debug() const -> void {
+    ImGui::SetNextWindowFocus();
+    ImGui::Begin("Page Manager");
+
+    ImGui::Text(
+        "Image dimensions: %dx%d",
+        static_cast<int>(image_dims_.width),
+        static_cast<int>(image_dims_.height)
+    );
+
+    ImGui::Text("Current LOD: %d", curr_lod_);
+    ImGui::End();
 }
 
 auto PageManager::GeneratePages() -> void {

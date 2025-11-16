@@ -72,6 +72,7 @@ auto main() -> int {
 
         controls.Update();
         page_manager.Update(camera);
+        page_manager.Debug();
     });
 
     return 0;

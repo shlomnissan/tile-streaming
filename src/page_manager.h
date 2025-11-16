@@ -22,9 +22,9 @@ public:
 
     auto Update(const OrthographicCamera& camera) -> void;
 
-    auto GetVisiblePages() -> std::vector<Page*>;
+    auto GetVisiblePages() const -> std::vector<Page*>;
 
-    auto Debug() -> void;
+    auto Debug() const -> void;
 
 private:
     std::vector<std::vector<Page>> pages_;
@@ -39,6 +39,7 @@ private:
     unsigned curr_lod_ {0};
     unsigned prev_lod_ {0};
 
+    bool first_frame_ {true};
     bool show_wireframes_ {false};
 
     auto GeneratePages() -> void;
