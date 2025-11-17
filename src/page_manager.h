@@ -46,7 +46,7 @@ private:
 
     auto ComputeLod(const OrthographicCamera& camera) const -> int;
 
-    auto IsPageVisible(const Page& page) const -> bool;
+    auto IsPageVisible(const Page& page, const Box2& visible_bounds) const -> bool;
 
     auto ComputeVisibleBounds(const OrthographicCamera& camera) const -> Box2;
 };

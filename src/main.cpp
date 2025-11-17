@@ -73,6 +73,17 @@ auto main() -> int {
         controls.Update();
         page_manager.Update(camera);
         page_manager.Debug();
+
+        shader_tile.Use();
+        shader_tile.SetUniform("u_Projection", camera.Projection());
+
+        auto pages = page_manager.GetVisiblePages();
+        for (auto& page : pages) {
+            if (page->visible) {
+                shader_tile.SetUniform("u_ModelView", camera.View() * page->Transform());
+                geometry.Draw(shader_tile);
+            }
+        }
     });
 
     return 0;

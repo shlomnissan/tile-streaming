@@ -20,10 +20,24 @@ PageManager::PageManager(
 }
 
 auto PageManager::Update(const OrthographicCamera& camera) -> void {
-    if (auto lod = ComputeLod(camera); first_frame_ || lod != curr_lod_) {
-        prev_lod_ = first_frame_ ? lod : curr_lod_;
+    const auto lod = ComputeLod(camera);
+
+    if (first_frame_) {
+        prev_lod_ = lod;
         curr_lod_ = lod;
-        if (first_frame_) first_frame_ = false;
+        first_frame_ = false;
+    }
+
+    if (lod != curr_lod_) {
+        prev_lod_ = curr_lod_;
+        curr_lod_ = lod;
+    }
+
+    const auto visible_bounds = ComputeVisibleBounds(camera);
+    for (auto i = 0; i <= max_lod_; ++i) {
+        for (auto& page : pages_[i]) {
+            page.visible = IsPageVisible(page, visible_bounds);
+        }
     }
 }
 
@@ -80,10 +94,17 @@ auto PageManager::ComputeLod(const OrthographicCamera& camera) const -> int {
     return std::clamp(static_cast<int>(lod), 0, static_cast<int>(max_lod_));
 }
 
-auto PageManager::IsPageVisible(const Page&) const -> bool {
-    return false;
+auto PageManager::IsPageVisible(const Page& page, const Box2& visible_bounds) const -> bool {
+    auto bounds = Box2 {.min = page.position, .max = page.position + page.size};
+    return visible_bounds.Intersects(bounds);
 }
 
-auto PageManager::ComputeVisibleBounds(const OrthographicCamera&) const -> Box2 {
-    return Box2 {};
+auto PageManager::ComputeVisibleBounds(const OrthographicCamera& camera) const -> Box2 {
+    auto inv_vp = glm::inverse(camera.Projection() * camera.View());
+    auto top_left = inv_vp * glm::vec4(-1.0f, 1.0f, 0.0f, 1.0f);
+    auto bottom_right = inv_vp * glm::vec4(1.0f, -1.0f, 0.0, 1.0f);
+    return Box2::FromPoints(
+        {top_left.x, top_left.y},
+        {bottom_right.x, bottom_right.y}
+    );
 }
