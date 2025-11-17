@@ -8,6 +8,7 @@
 class OrthographicCamera {
 public:
     glm::mat4 transform {1.0f};
+    glm::mat4 projection {1.0f};
 
     OrthographicCamera(
         float left,
@@ -17,10 +18,6 @@ public:
         float near,
         float far
     );
-
-    [[nodiscard]] auto Projection() const -> glm::mat4 {
-        return projection_;
-    }
 
     [[nodiscard]] auto View() const -> glm::mat4 {
         return glm::inverse(transform);
@@ -35,8 +32,6 @@ public:
     }
 
 private:
-    glm::mat4 projection_ {1.0f};
-
     float left_ {0.0f};
     float right_ {0.0f};
     float bottom_ {0.0f};

@@ -41,8 +41,12 @@ auto PageManager::Update(const OrthographicCamera& camera) -> void {
     }
 }
 
-auto PageManager::GetVisiblePages() const -> std::vector<Page*> {
+auto PageManager::GetVisiblePages() -> std::vector<Page*> {
     std::vector<Page*> visible_pages;
+
+    for (auto& page : pages_[curr_lod_]) {
+        visible_pages.push_back(&page);
+    }
 
     return visible_pages;
 }
@@ -73,8 +77,8 @@ auto PageManager::GeneratePages() -> void {
         for (auto j = 1; j <= n_pages; ++j) {
             auto x = (j - 1) % grid_x;
             auto y = (j - 1) / grid_y;
-            auto pos_x = static_cast<float>(x) * page_size_;
-            auto pos_y = static_cast<float>(y) * page_size_;
+            auto pos_x = static_cast<float>(x) * page_size_ * scale;
+            auto pos_y = static_cast<float>(y) * page_size_ * scale;
             pages_[i].emplace_back(Page {
                 {x, y}, // grid index
                 {pos_x, pos_y}, // position,
@@ -88,7 +92,7 @@ auto PageManager::GeneratePages() -> void {
 
 auto PageManager::ComputeLod(const OrthographicCamera& camera) const -> int {
     auto scale_x = glm::length(glm::vec3{camera.transform[0]});
-    auto virtual_width = camera.Width() / scale_x;
+    auto virtual_width = camera.Width() * scale_x;
     auto world_units_per_pixel = virtual_width / window_dims_.width;
     auto lod = std::log2(world_units_per_pixel);
     return std::clamp(static_cast<int>(lod), 0, static_cast<int>(max_lod_));
@@ -100,7 +104,7 @@ auto PageManager::IsPageVisible(const Page& page, const Box2& visible_bounds) co
 }
 
 auto PageManager::ComputeVisibleBounds(const OrthographicCamera& camera) const -> Box2 {
-    auto inv_vp = glm::inverse(camera.Projection() * camera.View());
+    auto inv_vp = glm::inverse(camera.projection * camera.View());
     auto top_left = inv_vp * glm::vec4(-1.0f, 1.0f, 0.0f, 1.0f);
     auto bottom_right = inv_vp * glm::vec4(1.0f, -1.0f, 0.0, 1.0f);
     return Box2::FromPoints(

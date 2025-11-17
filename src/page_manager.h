@@ -22,7 +22,7 @@ public:
 
     auto Update(const OrthographicCamera& camera) -> void;
 
-    auto GetVisiblePages() const -> std::vector<Page*>;
+    auto GetVisiblePages() -> std::vector<Page*>;
 
     auto Debug() const -> void;
 

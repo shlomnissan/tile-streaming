@@ -42,7 +42,7 @@ auto ZoomPanCamera::Pan() -> void {
         return;
     }
 
-    auto delta = prev_position_ - mouse_position_;
+    auto delta = (prev_position_ - mouse_position_);
     prev_position_ = mouse_position_;
     camera_->transform = glm::translate(camera_->transform, glm::vec3 {delta.x, delta.y, 0.0f});
 }
@@ -50,7 +50,7 @@ auto ZoomPanCamera::Pan() -> void {
 auto ZoomPanCamera::Zoom() -> void {
     zoom_ = false;
 
-    auto zoom_factor = 1.0f + curr_scroll_ * 0.01f;
+    auto zoom_factor = 1.0f - curr_scroll_ * 0.01f;
     zoom_factor_ *= zoom_factor;
 
     if (zoom_factor_ < 0.1f || zoom_factor_ > 5.0f) {

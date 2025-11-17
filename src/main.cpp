@@ -75,8 +75,9 @@ auto main() -> int {
         page_manager.Debug();
 
         shader_tile.Use();
-        shader_tile.SetUniform("u_Projection", camera.Projection());
+        shader_tile.SetUniform("u_Projection", camera.projection);
 
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         auto pages = page_manager.GetVisiblePages();
         for (auto& page : pages) {
             if (page->visible) {

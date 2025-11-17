@@ -27,7 +27,7 @@ private:
     glm::vec2 prev_position_ {0.0f};
 
     float zoom_factor_ {1.0f};
-    float curr_scroll_ {200.0f};
+    float curr_scroll_ {0.0f};
 
     bool is_first_pan_ {true};
     bool is_panning_ {false};
