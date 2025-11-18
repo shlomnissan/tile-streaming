@@ -10,16 +10,27 @@
 
 #include "core/texture2d.h"
 #include "loaders/image_loader.h"
-#include "types.h"
+
+enum class PageState {
+    Unloaded,
+    Loading,
+    Loaded,
+    Error
+};
+
+struct PageId {
+    unsigned lod;
+    int x;
+    int y;
+};
 
 struct Page {
-    glm::ivec2 index;
+    PageId id;
+
     glm::vec2 position;
     glm::vec2 size;
 
     float scale;
-
-    unsigned lod;
 
     bool visible {false};
 
@@ -28,12 +39,14 @@ struct Page {
     Texture2D texture;
 
     Page(
-        const glm::ivec2 index,
+        const PageId& id,
         const glm::vec2 position,
         const glm::vec2 size,
-        const float scale,
-        const unsigned lod
-    ): index(index), position(position), size(size), scale(scale), lod(lod) {}
+        const float scale
+    ) : id(id),
+        position(position),
+        size(size),
+        scale(scale) {}
 
     [[nodiscard]] auto Transform() const -> glm::mat4;
 };

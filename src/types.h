@@ -5,13 +5,6 @@
 
 #include <glm/vec2.hpp>
 
-enum class PageState {
-    Unloaded,
-    Loading,
-    Loaded,
-    Error
-};
-
 struct Dimensions {
     float width {0};
     float height {0};

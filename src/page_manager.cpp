@@ -10,33 +10,40 @@ PageManager::PageManager(
     const Dimensions& window_dims,
     const float page_size,
     const int lods
-) : image_dims_(image_dims),
+) :
+    loader_(ImageLoader::Create()),
+    image_dims_(image_dims),
     window_dims_(window_dims),
     page_size_(page_size),
     max_lod_(lods - 1)
 {
+    tiles_x_per_lod_.resize(lods);
+    tiles_y_per_lod_.resize(lods);
     pages_.resize(lods);
     GeneratePages();
 }
 
 auto PageManager::Update(const OrthographicCamera& camera) -> void {
-    const auto lod = ComputeLod(camera);
+    const auto this_lod = ComputeLod(camera);
 
     if (first_frame_) {
-        prev_lod_ = lod;
-        curr_lod_ = lod;
+        prev_lod_ = this_lod;
+        curr_lod_ = this_lod;
         first_frame_ = false;
     }
 
-    if (lod != curr_lod_) {
+    if (this_lod != curr_lod_) {
         prev_lod_ = curr_lod_;
-        curr_lod_ = lod;
+        curr_lod_ = this_lod;
     }
 
     const auto visible_bounds = ComputeVisibleBounds(camera);
-    for (auto i = 0; i <= max_lod_; ++i) {
-        for (auto& page : pages_[i]) {
+    for (auto lod = 0; lod <= max_lod_; ++lod) {
+        for (auto& page : pages_[lod]) {
             page.visible = IsPageVisible(page, visible_bounds);
+            if (lod == curr_lod_ && page.state == PageState::Unloaded) {
+                RequestPage(page.id);
+            }
         }
     }
 }
@@ -66,26 +73,34 @@ auto PageManager::Debug() const -> void {
 }
 
 auto PageManager::GeneratePages() -> void {
-    for (auto i = 0u; i <= max_lod_; ++i) {
-        auto lod_width = image_dims_.width / static_cast<float>(1 << i);
-        auto lod_height = image_dims_.height / static_cast<float>(1 << i);
-        auto scale = static_cast<float>(pow(2, i));
-        auto grid_x = static_cast<int>(lod_width / page_size_);
-        auto grid_y = static_cast<int>(lod_height / page_size_);
-        auto n_pages = grid_x * grid_y;
+    for (auto lod = 0u; lod <= max_lod_; ++lod) {
+        auto lod_w = image_dims_.width / static_cast<float>(1 << lod);
+        auto lod_h = image_dims_.height / static_cast<float>(1 << lod);
+        auto lod_scale = static_cast<float>(pow(2, lod));
+        auto tiles_x = static_cast<int>(std::ceil(lod_w / page_size_));
+        auto tiles_y = static_cast<int>(std::ceil(lod_h / page_size_));
 
-        for (auto j = 1; j <= n_pages; ++j) {
-            auto x = (j - 1) % grid_x;
-            auto y = (j - 1) / grid_y;
-            auto pos_x = static_cast<float>(x) * page_size_ * scale;
-            auto pos_y = static_cast<float>(y) * page_size_ * scale;
-            pages_[i].emplace_back(Page {
-                {x, y}, // grid index
-                {pos_x, pos_y}, // position,
-                {page_size_ * scale, page_size_ * scale}, // size,
-                scale, // scale
-                i // lod
-            });
+        tiles_x_per_lod_[lod] = tiles_x;
+        tiles_y_per_lod_[lod] = tiles_y;
+
+        pages_[lod].reserve(tiles_x * tiles_y);
+
+        for (auto y = 0; y < tiles_y; ++y) {
+            for (auto x = 0; x < tiles_x; ++x) {
+                auto id = PageId {lod, x, y};
+
+                auto size = glm::vec2 {
+                    page_size_ * lod_scale,
+                    page_size_ * lod_scale,
+                };
+
+                auto position = glm::vec2 {
+                    static_cast<float>(x) * size.x,
+                    static_cast<float>(y) * size.y
+                };
+
+                pages_[lod].emplace_back(id, position, size, lod_scale);
+            }
         }
     }
 }
@@ -111,4 +126,12 @@ auto PageManager::ComputeVisibleBounds(const OrthographicCamera& camera) const -
         {top_left.x, top_left.y},
         {bottom_right.x, bottom_right.y}
     );
+}
+
+auto PageManager::GetPageIndex(const PageId& id) const -> int {
+    return id.y * tiles_x_per_lod_[id.lod] + id.x;
+}
+
+auto PageManager::RequestPage(const PageId& id) -> void {
+    // TODO: implement (fetch from loader)
 }
