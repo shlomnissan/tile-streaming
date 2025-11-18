@@ -54,8 +54,19 @@ auto PageManager::Update(const OrthographicCamera& camera) -> void {
 auto PageManager::GetVisiblePages() -> std::vector<Page*> {
     std::vector<Page*> visible_pages;
 
+    // always include low-res tiles
+    for (auto& page : pages_[max_lod_]) {
+        if (page.visible && page.state == PageState::Loaded) {
+            visible_pages.push_back(&page);
+        }
+    }
+
+    if (curr_lod_ == max_lod_) return visible_pages;
+
     for (auto& page : pages_[curr_lod_]) {
-        visible_pages.push_back(&page);
+        if (page.state == PageState::Loaded) {
+            visible_pages.push_back(&page);
+        }
     }
 
     return visible_pages;
@@ -142,8 +153,8 @@ auto PageManager::RequestPage(const PageId& id) -> void {
     pages_[id.lod][idx].state = PageState::Loading;
      loader_->LoadAsync(path, [this, id, idx](auto result) {
         if (result) {
+            pages_[id.lod][idx].texture.SetImage(result.value());
             pages_[id.lod][idx].state = PageState::Loaded;
-            std::println("Loaded tile {}", id);
         } else {
             pages_[id.lod][idx].state = PageState::Unloaded;
             std::println("Failed to load tile {}", id.lod);

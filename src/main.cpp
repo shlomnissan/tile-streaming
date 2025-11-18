@@ -15,10 +15,8 @@
 #include "page_manager.h"
 #include "types.h"
 
-#include "shaders/headers/scene_frag.h"
-#include "shaders/headers/scene_vert.h"
-#include "shaders/headers/line_vert.h"
-#include "shaders/headers/line_frag.h"
+#include "shaders/headers/page_frag.h"
+#include "shaders/headers/page_vert.h"
 
 auto main() -> int {
     const auto window_dims = Dimensions {1024.0f, 1024.0f};
@@ -56,14 +54,9 @@ auto main() -> int {
         .height_segments = 1
     }};
 
-    auto shader_tile = Shaders {{
-        {ShaderType::kVertexShader, _SHADER_scene_vert},
-        {ShaderType::kFragmentShader, _SHADER_scene_frag}
-    }};
-
-    auto shader_line = Shaders {{
-        {ShaderType::kVertexShader, _SHADER_line_vert},
-        {ShaderType::kFragmentShader, _SHADER_line_frag}
+    auto page_shader = Shaders {{
+        {ShaderType::kVertexShader, _SHADER_page_vert},
+        {ShaderType::kFragmentShader, _SHADER_page_frag}
     }};
 
     window.Start([&]([[maybe_unused]] const double _){
@@ -74,15 +67,15 @@ auto main() -> int {
         page_manager.Update(camera);
         page_manager.Debug();
 
-        shader_tile.Use();
-        shader_tile.SetUniform("u_Projection", camera.projection);
+        page_shader.Use();
+        page_shader.SetUniform("u_Projection", camera.projection);
 
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         auto pages = page_manager.GetVisiblePages();
         for (auto& page : pages) {
-            if (page->visible) {
-                shader_tile.SetUniform("u_ModelView", camera.View() * page->Transform());
-                geometry.Draw(shader_tile);
+            if (page->state == PageState::Loaded) {
+                page->texture.Bind();
+                page_shader.SetUniform("u_ModelView", camera.View() * page->Transform());
+                geometry.Draw(page_shader);
             }
         }
     });
