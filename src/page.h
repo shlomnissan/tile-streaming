@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include <format>
 #include <memory>
 
 #include <glm/vec2.hpp>
@@ -22,6 +23,16 @@ struct PageId {
     unsigned lod;
     int x;
     int y;
+};
+
+template<>
+struct std::formatter<PageId> : std::formatter<std::string> {
+    auto format(const PageId& id, auto& ctx) const {
+        return std::formatter<std::string>::format(
+            std::format("{}_{}_{}", id.lod, id.x, id.y),
+            ctx
+        );
+    }
 };
 
 struct Page {

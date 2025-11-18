@@ -3,6 +3,9 @@
 
 #include "page_manager.h"
 
+#include <format>
+#include <print>
+
 #include <imgui.h>
 
 PageManager::PageManager(
@@ -41,7 +44,7 @@ auto PageManager::Update(const OrthographicCamera& camera) -> void {
     for (auto lod = 0; lod <= max_lod_; ++lod) {
         for (auto& page : pages_[lod]) {
             page.visible = IsPageVisible(page, visible_bounds);
-            if (lod == curr_lod_ && page.state == PageState::Unloaded) {
+            if (page.visible && lod == curr_lod_ && page.state == PageState::Unloaded) {
                 RequestPage(page.id);
             }
         }
@@ -133,5 +136,17 @@ auto PageManager::GetPageIndex(const PageId& id) const -> int {
 }
 
 auto PageManager::RequestPage(const PageId& id) -> void {
-    // TODO: implement (fetch from loader)
+    const auto idx = GetPageIndex(id);
+    const auto path = std::format("assets/tiles/{}.png", id);
+
+    pages_[id.lod][idx].state = PageState::Loading;
+     loader_->LoadAsync(path, [this, id, idx](auto result) {
+        if (result) {
+            pages_[id.lod][idx].state = PageState::Loaded;
+            std::println("Loaded tile {}", id);
+        } else {
+            pages_[id.lod][idx].state = PageState::Unloaded;
+            std::println("Failed to load tile {}", id.lod);
+        }
+    });
 }
