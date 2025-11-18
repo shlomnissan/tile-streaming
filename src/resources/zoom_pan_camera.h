@@ -12,6 +12,8 @@
 
 class ZoomPanCamera {
 public:
+    static constexpr float kPanSpeed {6.0f};
+
     explicit ZoomPanCamera(OrthographicCamera* camera);
 
     auto Update() -> void;

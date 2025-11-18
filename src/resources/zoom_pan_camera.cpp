@@ -42,9 +42,13 @@ auto ZoomPanCamera::Pan() -> void {
         return;
     }
 
-    auto delta = (prev_position_ - mouse_position_);
+    auto delta = (prev_position_ - mouse_position_) * kPanSpeed;
     prev_position_ = mouse_position_;
-    camera_->transform = glm::translate(camera_->transform, glm::vec3 {delta.x, delta.y, 0.0f});
+
+    camera_->transform = glm::translate(
+        camera_->transform,
+        glm::vec3 {delta.x, delta.y, 0.0f}
+    );
 }
 
 auto ZoomPanCamera::Zoom() -> void {
