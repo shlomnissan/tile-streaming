@@ -1,4 +1,6 @@
 #version 410 core
+#pragma debug(on)
+#pragma optimize(off)
 
 layout (location = 0) out vec4 FragColor;
 

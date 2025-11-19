@@ -39,7 +39,7 @@ public:
     auto LoadAsync(const fs::path& path, LoaderCallback<Resource> callback) const {
         if (!ValidateFile(path, callback)) return;
         auto self = this->shared_from_this();
-        std::thread([self, path, callback]() {
+        std::jthread([self, path, callback]() {
             auto resource = std::static_pointer_cast<Resource>(self->LoadImpl(path));
             if (resource) {
                 callback(resource);
