@@ -65,7 +65,7 @@ auto main() -> int {
 
         controls.Update();
         page_manager.Update(camera);
-        page_manager.Debug();
+        page_manager.Debug(camera);
 
         page_shader.Use();
         page_shader.SetUniform("u_Projection", camera.projection);

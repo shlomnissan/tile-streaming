@@ -9,6 +9,7 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set(EXECUTABLE tile_streaming)
 
 message(${CMAKE_SOURCE_DIR}/cmake)
 
@@ -52,7 +53,7 @@ set(EXTERNAL_SOURCES
     "${CMAKE_SOURCE_DIR}/external/imgui/imgui_impl_opengl3.cpp"
 )
 
-add_executable(tiling
+add_executable(${EXECUTABLE}
     ${LIBS_SOURCES}
     ${CORE_SOURCES}
     ${EXTERNAL_SOURCES}
@@ -64,12 +65,12 @@ add_executable(tiling
     src/types.h
 )
 
-target_include_directories(tiling PRIVATE
+target_include_directories(${EXECUTABLE} PRIVATE
     ${CMAKE_SOURCE_DIR}/src
     ${CMAKE_SOURCE_DIR}/external
 )
 
-target_link_libraries(tiling PRIVATE
+target_link_libraries(${EXECUTABLE} PRIVATE
     glfw
     glad::glad
     glm::glm
@@ -78,8 +79,8 @@ target_link_libraries(tiling PRIVATE
 )
 
 add_custom_command(
-    TARGET tiling POST_BUILD
+    TARGET ${EXECUTABLE} POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
     ${CMAKE_SOURCE_DIR}/assets
-    $<TARGET_FILE_DIR:tiling>/assets
+    $<TARGET_FILE_DIR:${EXECUTABLE}>/assets
 )

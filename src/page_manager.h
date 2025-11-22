@@ -26,7 +26,7 @@ public:
 
     auto GetVisiblePages() -> std::vector<Page*>;
 
-    auto Debug() const -> void;
+    auto Debug(const OrthographicCamera& camera) const -> void;
 
 private:
     std::vector<int> tiles_x_per_lod_;
