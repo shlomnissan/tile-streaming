@@ -58,10 +58,10 @@ add_executable(${EXECUTABLE}
     ${CORE_SOURCES}
     ${EXTERNAL_SOURCES}
     src/main.cpp
-    src/page.cpp
-    src/page.h
-    src/page_manager.cpp
-    src/page_manager.h
+    src/tile.cpp
+    src/tile.h
+    src/tile_manager.cpp
+    src/tile_manager.h
     src/types.h
 )
 

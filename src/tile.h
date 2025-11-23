@@ -12,22 +12,22 @@
 #include "core/texture2d.h"
 #include "loaders/image_loader.h"
 
-enum class PageState {
+enum class TileState {
     Unloaded,
     Loading,
     Loaded,
     Error
 };
 
-struct PageId {
+struct TileId {
     unsigned lod;
     int x;
     int y;
 };
 
 template<>
-struct std::formatter<PageId> : std::formatter<std::string> {
-    auto format(const PageId& id, auto& ctx) const {
+struct std::formatter<TileId> : std::formatter<std::string> {
+    auto format(const TileId& id, auto& ctx) const {
         return std::formatter<std::string>::format(
             std::format("{}_{}_{}", id.lod, id.x, id.y),
             ctx
@@ -35,8 +35,8 @@ struct std::formatter<PageId> : std::formatter<std::string> {
     }
 };
 
-struct Page {
-    PageId id;
+struct Tile {
+    TileId id;
 
     glm::vec2 position;
     glm::vec2 size;
@@ -45,12 +45,12 @@ struct Page {
 
     bool visible {false};
 
-    PageState state {PageState::Unloaded};
+    TileState state {TileState::Unloaded};
 
     Texture2D texture;
 
-    Page(
-        const PageId& id,
+    Tile(
+        const TileId& id,
         const glm::vec2 position,
         const glm::vec2 size,
         const float scale

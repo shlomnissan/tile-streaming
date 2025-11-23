@@ -1,32 +1,32 @@
 // Copyright © 2025 - Present, Shlomi Nissan.
 // All rights reserved.
 
-#include "page_manager.h"
+#include "tile_manager.h"
 
 #include <format>
 #include <print>
 
 #include <imgui.h>
 
-PageManager::PageManager(
-    const Dimensions& image_dims,
+TileManager::TileManager(
+    const Dimensions& texture_dims,
     const Dimensions& window_dims,
-    const float page_size,
+    const float tile_size,
     const int lods
 ) :
     loader_(ImageLoader::Create()),
-    image_dims_(image_dims),
+    texture_dims_(texture_dims),
     window_dims_(window_dims),
-    page_size_(page_size),
+    tile_size_(tile_size),
     max_lod_(lods - 1)
 {
     tiles_x_per_lod_.resize(lods);
     tiles_y_per_lod_.resize(lods);
-    pages_.resize(lods);
-    GeneratePages();
+    tiles_.resize(lods);
+    GenerateTiles();
 }
 
-auto PageManager::Update(const OrthographicCamera& camera) -> void {
+auto TileManager::Update(const OrthographicCamera& camera) -> void {
     const auto this_lod = ComputeLod(camera);
 
     if (first_frame_) {
@@ -42,68 +42,68 @@ auto PageManager::Update(const OrthographicCamera& camera) -> void {
 
     const auto visible_bounds = ComputeVisibleBounds(camera);
     for (auto lod = 0; lod <= max_lod_; ++lod) {
-        for (auto& page : pages_[lod]) {
-            page.visible = IsPageVisible(page, visible_bounds);
-            if (page.visible && lod == curr_lod_ && page.state == PageState::Unloaded) {
-                RequestPage(page.id);
+        for (auto& tile : tiles_[lod]) {
+            tile.visible = IsTileVisible(tile, visible_bounds);
+            if (tile.visible && lod == curr_lod_ && tile.state == TileState::Unloaded) {
+                RequestTile(tile.id);
             }
         }
     }
 }
 
-auto PageManager::GetVisiblePages() -> std::vector<Page*> {
-    std::vector<Page*> visible_pages;
+auto TileManager::GetVisibleTiles() -> std::vector<Tile*> {
+    std::vector<Tile*> visible_tiles;
 
     // always include low-res tiles
-    for (auto& page : pages_[max_lod_]) {
-        if (page.visible && page.state == PageState::Loaded) {
-            visible_pages.push_back(&page);
+    for (auto& tile : tiles_[max_lod_]) {
+        if (tile.visible && tile.state == TileState::Loaded) {
+            visible_tiles.push_back(&tile);
         }
     }
 
-    if (curr_lod_ == max_lod_) return visible_pages;
+    if (curr_lod_ == max_lod_) return visible_tiles;
 
-    for (auto& page : pages_[curr_lod_]) {
-        if (page.state == PageState::Loaded) {
-            visible_pages.push_back(&page);
+    for (auto& tile : tiles_[curr_lod_]) {
+        if (tile.state == TileState::Loaded) {
+            visible_tiles.push_back(&tile);
         }
     }
 
-    return visible_pages;
+    return visible_tiles;
 }
 
-auto PageManager::Debug(const OrthographicCamera& camera) const -> void {
+auto TileManager::Debug(const OrthographicCamera& camera) const -> void {
     auto camera_scale = glm::length(glm::vec3 {camera.transform[0]});
 
     ImGui::SetNextWindowFocus();
-    ImGui::Begin("Page Manager");
-    ImGui::Text("Image size: %d", static_cast<int>(image_dims_.height));
+    ImGui::Begin("Tile Manager");
+    ImGui::Text("Texture size: %d", static_cast<int>(texture_dims_.height));
     ImGui::Text("Current LOD: %d", curr_lod_);
     ImGui::Text("Camera size: %.2f", camera.Width() * camera_scale);
 
     ImGui::End();
 }
 
-auto PageManager::GeneratePages() -> void {
+auto TileManager::GenerateTiles() -> void {
     for (auto lod = 0u; lod <= max_lod_; ++lod) {
-        auto lod_w = image_dims_.width / static_cast<float>(1 << lod);
-        auto lod_h = image_dims_.height / static_cast<float>(1 << lod);
+        auto lod_w = texture_dims_.width / static_cast<float>(1 << lod);
+        auto lod_h = texture_dims_.height / static_cast<float>(1 << lod);
         auto lod_scale = static_cast<float>(pow(2, lod));
-        auto tiles_x = static_cast<int>(std::ceil(lod_w / page_size_));
-        auto tiles_y = static_cast<int>(std::ceil(lod_h / page_size_));
+        auto tiles_x = static_cast<int>(std::ceil(lod_w / tile_size_));
+        auto tiles_y = static_cast<int>(std::ceil(lod_h / tile_size_));
 
         tiles_x_per_lod_[lod] = tiles_x;
         tiles_y_per_lod_[lod] = tiles_y;
 
-        pages_[lod].reserve(tiles_x * tiles_y);
+        tiles_[lod].reserve(tiles_x * tiles_y);
 
         for (auto y = 0; y < tiles_y; ++y) {
             for (auto x = 0; x < tiles_x; ++x) {
-                auto id = PageId {lod, x, y};
+                auto id = TileId {lod, x, y};
 
                 auto size = glm::vec2 {
-                    page_size_ * lod_scale,
-                    page_size_ * lod_scale,
+                    tile_size_ * lod_scale,
+                    tile_size_ * lod_scale,
                 };
 
                 auto position = glm::vec2 {
@@ -111,13 +111,13 @@ auto PageManager::GeneratePages() -> void {
                     static_cast<float>(y) * size.y
                 };
 
-                pages_[lod].emplace_back(id, position, size, lod_scale);
+                tiles_[lod].emplace_back(id, position, size, lod_scale);
             }
         }
     }
 }
 
-auto PageManager::ComputeLod(const OrthographicCamera& camera) const -> int {
+auto TileManager::ComputeLod(const OrthographicCamera& camera) const -> int {
     auto scale_x = glm::length(glm::vec3{camera.transform[0]});
     auto virtual_width = camera.Width() * scale_x;
     auto world_units_per_pixel = virtual_width / window_dims_.width;
@@ -125,12 +125,12 @@ auto PageManager::ComputeLod(const OrthographicCamera& camera) const -> int {
     return std::clamp(static_cast<int>(lod), 0, static_cast<int>(max_lod_));
 }
 
-auto PageManager::IsPageVisible(const Page& page, const Box2& visible_bounds) const -> bool {
-    auto bounds = Box2 {.min = page.position, .max = page.position + page.size};
+auto TileManager::IsTileVisible(const Tile& tile, const Box2& visible_bounds) const -> bool {
+    auto bounds = Box2 {.min = tile.position, .max = tile.position + tile.size};
     return visible_bounds.Intersects(bounds);
 }
 
-auto PageManager::ComputeVisibleBounds(const OrthographicCamera& camera) const -> Box2 {
+auto TileManager::ComputeVisibleBounds(const OrthographicCamera& camera) const -> Box2 {
     auto inv_vp = glm::inverse(camera.projection * camera.View());
     auto top_left = inv_vp * glm::vec4(-1.0f, 1.0f, 0.0f, 1.0f);
     auto bottom_right = inv_vp * glm::vec4(1.0f, -1.0f, 0.0, 1.0f);
@@ -140,21 +140,22 @@ auto PageManager::ComputeVisibleBounds(const OrthographicCamera& camera) const -
     );
 }
 
-auto PageManager::GetPageIndex(const PageId& id) const -> int {
+auto TileManager::GetTileIndex(const TileId& id) const -> int {
     return id.y * tiles_x_per_lod_[id.lod] + id.x;
 }
 
-auto PageManager::RequestPage(const PageId& id) -> void {
-    const auto idx = GetPageIndex(id);
+auto TileManager::RequestTile(const TileId& id) -> void {
+    const auto idx = GetTileIndex(id);
     const auto path = std::format("assets/tiles/{}.png", id);
 
-    pages_[id.lod][idx].state = PageState::Loading;
+    tiles_[id.lod][idx].state = TileState::Loading;
      loader_->LoadAsync(path, [this, id, idx](auto result) {
         if (result) {
-            pages_[id.lod][idx].texture.SetImage(result.value());
-            pages_[id.lod][idx].state = PageState::Loaded;
+            tiles_[id.lod][idx].texture.SetImage(result.value());
+            tiles_[id.lod][idx].state = TileState::Loaded;
+            std::println("Loaded tile {}", id);
         } else {
-            pages_[id.lod][idx].state = PageState::Unloaded;
+            tiles_[id.lod][idx].state = TileState::Unloaded;
             std::println("Failed to load tile {}", id.lod);
         }
     });
